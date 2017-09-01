@@ -24,3 +24,8 @@ One side has to be 'master' with belongsTo
 Used an explicit domain for the join-table (Book2Author).
 - deletion works out-of-the-box with one-to-many-logic
 - create / update is customized in the controllers via save / update methods and customized fields-templates for the properties
+
+## TODO (report bugs)
+- cascade-delete is ignored in integration-tests and just works in run-app/tomcat
+    - additional before-delete for integration-tests
+- How to test controller-methods save/update with domain against database in integration-test?

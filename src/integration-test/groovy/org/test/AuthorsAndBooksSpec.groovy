@@ -4,6 +4,7 @@ package org.test
 import grails.test.mixin.integration.Integration
 import grails.transaction.*
 import groovy.sql.Sql
+import org.springframework.dao.DataIntegrityViolationException
 import spock.lang.*
 
 import javax.sql.DataSource
@@ -29,7 +30,7 @@ class AuthorsAndBooksSpec extends Specification {
 
     void "test domains"(){
         when:
-            def author1 = new Author(name: "Douglas Adams").save(failOnError: true)
+            def author1 = new Author(name: name).save(failOnError: true)
             def author2 = new Author(name: "Adam Smith").save(failOnError: true)
             def author3 = new Author(name: "Stephen King").save(failOnError: true)
         then:
@@ -47,11 +48,29 @@ class AuthorsAndBooksSpec extends Specification {
             queryTableSize("book") == 3
 
         when:
-            new Book2Author(book: book1, author: author1).save(failOnError: true)
-            new Book2Author(book: book2, author: author2).save(failOnError: true)
-            new Book2Author(book: book3, author: author3).save(failOnError: true)
+            new Book2Author(book: book1, author: author1).save(flush: true, failOnError: true)
+            new Book2Author(book: book2, author: author2).save(flush: true, failOnError: true)
+            new Book2Author(book: book3, author: author3).save(flush: true, failOnError: true)
         then:
             Book2Author.count() == 3
             queryTableSize('book2author') == 3
+
+        when:
+            author1.delete(flush: true, failOnError: true)
+        then:
+            Book2Author.count() == 2
+            Book.count() == 3
+            Author.count() == 2
+            Author.findByName(name) == null
+
+        when:
+            book3.delete(flush: true, failOnError: true)
+        then:
+            final DataIntegrityViolationException exception = thrown()
+            Book.count() == 3 // still wrong...
+
+        where:
+            name = "Douglas Adams"
     }
+
 }
